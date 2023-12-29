@@ -1,0 +1,33 @@
+ja:
+  timezone: タイムゾーン
+  next_schedule: 次のスケジュール
+  getschedule_slot: スケジュール取得スロット
+  block_minted_result: "ブロック生成結果(%{current_epoch})"
+  block_no: ブロックNo
+  slot_no: スロットNo
+  next_schedule_at: 次のスケジュール日時
+  total_schedule: 総スケジュール
+  epoch: エポック
+  notification: "[%{ticker}] お知らせ"
+  epoch_schedule_details: "[%{ticker}] %{nextEpoch}エポックスケジュール詳細"
+  ideal: 期待値(Ideal)
+  luck: 割当て確率(Luck)
+  allocated_blocks: 割当てブロック数
+  sentence_criteria_correctly: 通知基準を正しく設定してください
+  sentence_connected_sql: DBに接続しました
+  sentence_closed_sql: DB接続を閉じました
+  sentence_getschedule_slot: 次エポックのスケジュールを取得してください
+  sentence_db_failed_read: DBからのデータ読み込みに失敗しました
+  sentence_started_tool: モニタリングツールを起動しました
+  sentence_started_run: "[%{ticker}] ブロック生成ステータス通知を起動しました"
+  sentence_schedule_slot: スケジュール取得は%{get_slot}スロットです
+  sentence_wait_node_sync: ノード同期までお待ちください"
+  sentence_getschedule_start: nextEpochエポックスケジュールの自動取得を開始します
+  sentence_alert_min_schedule: 数分後に取得結果を通知します
+  sentence_passed_the_slot: "%{currentEpoch}エポック%{slotn}スロットを過ぎました"
+  sentence_you_canget_theschedule: "%{nextepoch}エポックのスケジュールを取得できます！"
+  sentence_not_schedule: スケジュールはありませんでした
+  sentence_setting_alert_flag: 通知先フラグを正しく設定してください
+  sentence_line_token: LINE通知用アクセストークンを正しく設定してください
+  sentence_webhook_url: WebhookURLを正しく設定してください
+  sentence_telegram_token: テレグラム通知用トークンを正しく設定してください
