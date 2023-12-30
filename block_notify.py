@@ -1,6 +1,6 @@
 #2023/12/19 v2.0.0 @btbf
 
-from watchdog.events import RegexMatchingEventHandler
+from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 from concurrent.futures import ThreadPoolExecutor
 import os
@@ -25,7 +25,7 @@ load_dotenv()
 
 # 環境変数を読み込む
 guild_db_dir = os.environ["guild_db_dir"]
-usrhome = os.environ["HOME"]
+guild_db_name = os.environ["guild_db_name"]
 home = os.environ["NODE_HOME"]
 ticker = os.environ["ticker"]
 line_notify_token = os.environ["line_notify_token"]
@@ -45,6 +45,10 @@ send = (subprocess.Popen(sendStream, stdout=subprocess.PIPE,
 send = int(send.strip())
 line_leader_str_list = []
 
+#guild_db存在確認
+guild_db_fullpath = guild_db_dir + guild_db_name
+guild_db_is_file = os.path.isfile(guild_db_fullpath)
+
 #print(send)
 
 #通知基準 全て=0 confirm以外全て=1 Missedとivaildのみ=2
@@ -61,7 +65,7 @@ else:
 def getAllRows(timing):
     try:
         global prev_block
-        connection = sqlite3.connect(usrhome + guild_db_dir + 'blocklog.db')
+        connection = sqlite3.connect(guild_db_fullpath)
         cursor = connection.cursor()
         print(i18n.t('message.sentence_connected_sql'))
 
@@ -349,15 +353,17 @@ def getScheduleSlot():
             stream = os.popen(f'send={send}; echo $send > send.txt')
 
 
-class MyFileWatchHandler(RegexMatchingEventHandler):
+#class MyFileWatchHandler(RegexMatchingEventHandler):
+class MyFileWatchHandler(PatternMatchingEventHandler):
 
-    def __init__(self, regexes):
-        super().__init__(regexes=regexes)
+    #def __init__(self, regexes):
+    #    super().__init__(regexes=regexes)
 
     # ファイル変更時の動作
     def on_modified(self, event):
         filepath = event.src_path
         filename = os.path.basename(filepath)
+        print(filename)
         dt_now = datetime.datetime.now()
         fsize = os.path.getsize(filepath)
         if filename.startswith('block'):
@@ -370,11 +376,11 @@ class MyFileWatchHandler(RegexMatchingEventHandler):
 random_slot_num=randomSlot()
 
 if __name__ == "__main__":
-
     # 対象ディレクトリ
-    DIR_WATCH = usrhome + guild_db_dir
+    DIR_WATCH = guild_db_dir
+    print(DIR_WATCH)
     # 対象ファイルパスのパターン
-    PATTERNS = [r'^.\/blocklog.*\.db$']
+    PATTERNS = [guild_db_name]
 
     def on_modified(event):
         filepath = event.src_path
@@ -383,6 +389,8 @@ if __name__ == "__main__":
 
     if bNotify >= "4" or bNotify == "":
         print(i18n.t('message.sentence_setting_alert_flag'))
+    elif not guild_db_is_file:
+        print("Guild-DBファイルが見つかりません")
     else:
         if bNotify == "0" and line_notify_token == "":
             print(i18n.t('message.sentence_line_token'))
@@ -394,7 +402,6 @@ if __name__ == "__main__":
             print(i18n.t('message.sentence_telegram_token'))
         else:
             event_handler = MyFileWatchHandler(PATTERNS)
-
             observer = Observer()
             observer.schedule(event_handler, DIR_WATCH, recursive=True)
             observer.start()
