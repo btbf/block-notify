@@ -1,4 +1,5 @@
 #2023/12/19 v2.0.0 @btbf
+version = "2.0.0"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -17,9 +18,6 @@ from dateutil import parser
 from discordwebhook import Discord
 from dotenv import load_dotenv
 
-i18n.load_path.append('./i18n')
-i18n.set('locale', 'ja')
-
 # .envファイルの内容を読み込みます
 load_dotenv()
 
@@ -30,6 +28,7 @@ home = os.environ["NODE_HOME"]
 ticker = os.environ["ticker"]
 line_notify_token = os.environ["line_notify_token"]
 dc_notify_url = os.environ["dc_notify_url"]
+language = os.environ["language"]
 b_timezone = os.environ["b_timezone"]
 bNotify = os.environ["bNotify"]
 bNotify_st = os.environ["bNotify_st"]
@@ -44,6 +43,10 @@ send = (subprocess.Popen(sendStream, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
 send = int(send.strip())
 line_leader_str_list = []
+
+#多言語設定
+i18n.load_path.append('./i18n')
+i18n.set('locale', language)
 
 #guild_db存在確認
 guild_db_fullpath = guild_db_dir + guild_db_name
@@ -67,7 +70,7 @@ def getAllRows(timing):
         global prev_block
         connection = sqlite3.connect(guild_db_fullpath)
         cursor = connection.cursor()
-        print(i18n.t('message.sentence_connected_sql'))
+        #print(i18n.t('message.sentence_connected_sql'))
 
         sqlite_select_query = """SELECT * FROM blocklog WHERE status NOT IN ("adopted","leader") order by at desc limit 1;"""
         cursor.execute(sqlite_select_query)
@@ -77,7 +80,7 @@ def getAllRows(timing):
         #print("Printing each row")
         for row in records:
             
-            print(i18n.t('message.slot_no')+":", row[1])
+            #print(i18n.t('message.slot_no')+":", row[1])
         
             at_string = row[2]
             btime = parser.parse(at_string).astimezone(timezone(b_timezone)).strftime('%Y-%m-%d %H:%M:%S')
@@ -95,13 +98,13 @@ def getAllRows(timing):
             cursor.execute(sqlite_next_leader)
             next_leader_records = cursor.fetchall()
 
-            print(i18n.t('message.timezone')+":", b_timezone)
-            print(i18n.t('message.next_schedule')+":", next_leader_records)
+            #print(i18n.t('message.timezone')+":", b_timezone)
+            #print(i18n.t('message.next_schedule')+":", next_leader_records)
             if next_leader_records:
                 for next_leader_row in next_leader_records:
                     at_next_string = next_leader_row[2]
                     next_btime = parser.parse(at_next_string).astimezone(timezone(b_timezone))
-                    print(i18n.t('message.getschedule_slot')+":", f"{random_slot_num}\n")
+                    #print(i18n.t('message.getschedule_slot')+":", f"{random_slot_num}\n")
                     p_next_btime = str(next_btime)
 
             else:
@@ -114,7 +117,7 @@ def getAllRows(timing):
             if timing == 'modified':
                 if prev_block != row[4] and row[8] not in notStatus:
                     #LINE通知内容
-                    b_message = '\r\n' + ticker + i18n.t('message.getschedule_slot', current_epoch=str(row[3])) +'\r\n'\
+                    b_message = '\r\n' + ticker + i18n.t('message.block_minted_result', current_epoch=str(row[3])) +'\r\n'\
                         + '\r\n'\
                         + '📍'+str(scheduleNo)+' / '+str(total_schedule)+' > '+ str(row[8])+'\r\n'\
                         + '⏰'+str(btime)+'\r\n'\
@@ -127,6 +130,7 @@ def getAllRows(timing):
                         + p_next_btime+'\r\n'\
 
                     sendMessage(b_message)
+                    print(f"{str(btime)} - {str(row[4])} {str(scheduleNo)}/{str(total_schedule)} >> {str(row[8])}")
                     #通知先 LINE=0 Discord=1 Slack=2 Telegram=3 ※複数通知は不可
 
                 else:
@@ -147,11 +151,21 @@ def getAllRows(timing):
         if connection:
             connection.close()
             if timing == 'start':
-                print(i18n.t('message.sentence_started_tool'))
                 start_message = '\r\n' + i18n.t('message.sentence_started_run', ticker=ticker) + '🟢\r\n'\
                     + i18n.t('message.sentence_schedule_slot', get_slot=str(random_slot_num)) +'\r\n'\
 
                 sendMessage(start_message)
+                
+                #Startup message
+                run_title = '\n----------------------------------------------' \
+                    + '\n  ' + i18n.t('message.tool_title') + f"   -    Ver:{version}\n" \
+                    + '----------------------------------------------' \
+                    
+                print(run_title)
+                print(i18n.t('message.getschedule_slot')+":", f"{random_slot_num}\n")
+                print(i18n.t('message.next_schedule')+":", f"{next_leader_records}\n")
+                print(i18n.t('message.sentence_started_run') + "\n")
+
 
 def sendMessage(b_message):
     #通知先 LINE=0 Discord=1 Slack=2 Telegram=3 ※複数通知は不可
@@ -179,7 +193,7 @@ def getNo(slotEpoch,epochNo):
         sqlite_select_query = f"SELECT * FROM blocklog WHERE epoch=={epochNo} order by slot asc;"
         cursor.execute(sqlite_select_query)
         epoch_records = cursor.fetchall()
-        print(i18n.t('message.total_schedule') + ":", len(epoch_records))
+        #print(i18n.t('message.total_schedule') + ":", len(epoch_records))
         for i, row in enumerate(epoch_records, 1):
             if slotEpoch == row[5]:
                 ssNo = i
@@ -194,7 +208,7 @@ def getNo(slotEpoch,epochNo):
     finally:
         if connection:
             connection.close()
-            print(i18n.t('message.sentence_closed_sql') + "\n")
+            #print(i18n.t('message.sentence_closed_sql') + "\n")
             return ssNo, len(epoch_records)
 
 def d_line_notify(line_message):
@@ -218,7 +232,7 @@ def getEpoch():
 
         else:
             bepochNo = process.replace('cardano_node_metrics_epoch_int ', '')
-            print (i18n.t('message.epoch') + ":", bepochNo)
+            #print (i18n.t('message.epoch') + ":", bepochNo)
             break
         time.sleep(30)
     return bepochNo
@@ -230,9 +244,7 @@ def randomSlot():
 def getScheduleSlot():
     line_leader_str_list = []
     leader_str = ""
-    #slotComm = os.popen('curl -s localhost:12798/metrics | grep slotIn | grep -o [0-9]*')
     slotComm = "curl -s localhost:12798/metrics | grep slotIn | grep -o [0-9]*"
-    #slotn = slotComm.read()
     slotn = (subprocess.Popen(slotComm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     slotn = int(slotn)
@@ -254,7 +266,7 @@ def getScheduleSlot():
                     + i18n.t('message.sentence_you_canget_theschedule', nextepoch=str(nextEpoch)) + '\r\n'\
 
             sendMessage(b_message)
-            #print ("スケジュールが取得できます")
+
             send = 1
             stream = os.popen(f'send={send}; echo $send > send.txt')
         elif send >= 1 and send <= 5: #スケジュール結果送信
@@ -263,7 +275,7 @@ def getScheduleSlot():
             try:
                 connection = sqlite3.connect(home + '/guild-db/blocklog/blocklog.db')
                 cursor = connection.cursor()
-                print(i18n.t('message.sentence_connected_sql'))
+                #print(i18n.t('message.sentence_connected_sql'))
 
                 sqlite_epochdata_query = f"select * from epochdata where epoch = {nextEpoch} LIMIT 1;"
                 cursor.execute(sqlite_epochdata_query)
@@ -274,8 +286,7 @@ def getScheduleSlot():
                     for fetch_epoch_row in fetch_epoch_records:
                         luck = fetch_epoch_row[7]
                         ideal = fetch_epoch_row[6]
-
-                    #print("エポックレコードあり")
+#
                     next_epoch_leader = f"select * from blocklog where epoch = {nextEpoch} order by slot asc;"
                     cursor.execute(next_epoch_leader)
                     fetch_leader_records = cursor.fetchall()
@@ -341,7 +352,7 @@ def getScheduleSlot():
             finally:
                 if connection:
                     connection.close()
-                    print(i18n.t('message.sentence_closed_sql') + '\n')
+                    #print(i18n.t('message.sentence_closed_sql') + '\n')
 
         else:
             pass
@@ -363,12 +374,12 @@ class MyFileWatchHandler(PatternMatchingEventHandler):
     def on_modified(self, event):
         filepath = event.src_path
         filename = os.path.basename(filepath)
-        print(filename)
+        #print(filename)
         dt_now = datetime.datetime.now()
         fsize = os.path.getsize(filepath)
         if filename.startswith('block'):
-            print(f"{dt_now} {filename}")
-            print(f"-- size: {fsize}")
+            #print(f"{dt_now} {filename}")
+            #print(f"-- size: {fsize}")
             timing = 'modified'
             getAllRows(timing)
 
@@ -378,7 +389,7 @@ random_slot_num=randomSlot()
 if __name__ == "__main__":
     # 対象ディレクトリ
     DIR_WATCH = guild_db_dir
-    print(DIR_WATCH)
+    #print(DIR_WATCH)
     # 対象ファイルパスのパターン
     PATTERNS = [guild_db_name]
 
