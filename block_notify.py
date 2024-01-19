@@ -1,5 +1,5 @@
-#2023/12/19 v2.0.0 @btbf
-version = "2.0.0"
+#2024/1/19 v2.0.0 @btbf
+version = "2.0.1"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
