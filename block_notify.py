@@ -1,5 +1,4 @@
-#2024/1/19 v2.0.0 @btbf
-version = "2.1.0"
+version = "2.1.1"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -21,7 +20,7 @@ from discordwebhook import Discord
 from dotenv import load_dotenv
 
 # .envファイルの内容を読み込みます
-dotenv_path = f"{dirname(__file__)}/.env2"
+dotenv_path = f"{dirname(__file__)}/.env"
 load_dotenv(dotenv_path)
 
 # 環境変数を読み込む
