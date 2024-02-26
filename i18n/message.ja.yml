@@ -36,3 +36,4 @@ ja:
   sentence_guilddb_file: "Guild-DBファイルが見つかりません"
   sentence_shelley_genesis_file: "ShelleyGenesisファイルがみつかりません"
   sentence_byron_genesis_file: "ByronGenesisファイルがみつかりません"
+  sentence_nextepoch_leader_date: "スケジュール日付はブロックログをご確認ください"
