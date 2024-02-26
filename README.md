@@ -2,6 +2,9 @@
 
 Notify block mint results to any message platform.
 
+## Supported platforms
+[LINE](https://notify-bot.line.me/ja/) / [Discord](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) / [Slack](https://api.slack.com/messaging/webhooks) / [Telegram](https://core.telegram.org/bots/api)
+
 ## Setup
 
 <details>
@@ -36,18 +39,17 @@ pip install discordwebhook python-dotenv slackweb i18nice
 
 ### **Download scripts and configuration files**
 ```
+bn_release="$(curl -s https://api.github.com/repos/btbf/block-notify/releases/latest | jq -r '.tag_name')"
+wget https://github.com/btbf/block-notify/archive/refs/tags/${bn_release}.tar.gz -P $NODE_HOME/scripts
 cd $NODE_HOME/scripts
-git clone https://github.com/btbf/block-notify.git
+tar zxvf ${bn_release}.tar.gz block-notify-${bn_release}/block_notify.py block-notify-${bn_release}/.env block-notify-${bn_release}/i18n/
+mv block-notify-${bn_release} block-notify
 cd block-notify
-git fetch --all --recurse-submodules --tags
-git checkout tags/<latest_tag_name>
-chmod 755 block_check.py
 ```
-
 
 ### 2. Usage
 
-Editing Configuration Files
+Editing Configuration Files(.env)
 
 ```
 nano .env
@@ -55,19 +57,86 @@ nano .env
 
 | 項目      | 使用用途                          |
 | ----------- | ------------------------------------ |
-| `guild_db_dir`       | Path of the blocklog.db directory  |
-| `guild_db_name`       | File name of block log DB  |
-| `ticker`       | Pool ticker name  |
-| `line_notify_token`      | Line Notify Token |
-| `dc_notify_url`    | Discord Webhook URL |
-| `slack_notify_url`    | Slack Webhook URL |
-| `teleg_token`    | Telegram API Token |
-| `teleg_id`    | Telegram ChatID |
-| `language`    | used language |
-| `b_timezone`    | Time Zone |
-| `bNotify`    | notify in advance |
-| `bNotify_st`    | Notification benchmarks |
-| `auto_leader`    | How to obtain a schedule |
+| `guild_db_dir` | guild-dbのパスを入力する |
+| `shelley_genesis` | shelley_genesisのファイルパスを入力する |
+| `byron_genesis` | byron_genesisのファイルパスを入力する |
+| `language` | 通知言語を入力する
+| `ticker`       | プールティッカー名を入力する  |
+| `line_notify_token`      | Line Notifyトークンを入力する |
+| `dc_notify_url`    | DiscordウェブフックURLを入力する |
+| `slack_notify_url`    | SlackウェブフックURLを入力する |
+| `teleg_token`    | Telegram APIトークンを入力する |
+| `teleg_id`    | Telegram ChatIDを入力する |
+| `b_timezone`    | お住いのタイムゾーンを指定する |
+| `bNotify`    | 通知先を指定する |
+| `bNotify_st`    | 通知基準を設定する |
+| `nextepoch_leader_date`    | #次エポックスケジュール日時の通知有無 |
+
+**Configure the service file**
+
+```bash
+cat > $NODE_HOME/service/cnode-blocknotify.service << EOF 
+# file: /etc/systemd/system/cnode-blocknotify.service
+
+[Unit]
+Description=Cardano Node - SPO Blocknotify
+BindsTo=cnode-cncli-sync.service
+After=cnode-cncli-sync.service
+
+[Service]
+Type=simple
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=20
+User=$(whoami)
+WorkingDirectory=${NODE_HOME}/scripts
+Environment="NODE_HOME=${NODE_HOME}"
+ExecStart=/bin/bash -c 'cd ${NODE_HOME}/scripts/block-notify/ && python3 -u ./block_notify.py'
+StandardInput=tty-force
+SuccessExitStatus=143
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cnode-blocknotify
+TimeoutStopSec=5
+KillMode=mixed
+
+[Install]
+WantedBy=cnode-cncli-sync.service
+EOF
+```
+
+```
+sudo cp $NODE_HOME/service/cnode-blocknotify.service /etc/systemd/system/cnode-blocknotify.service
+```
+
+```
+sudo chmod 644 /etc/systemd/system/cnode-blocknotify.service
+sudo systemctl daemon-reload
+sudo systemctl enable cnode-blocknotify.service
+```
+
+Activate SPO BlockNotify
+```
+sudo systemctl start cnode-blocknotify.service
+```
+
+Add an alias for checking logs to the environment variable
+```
+echo alias blocknotify='"journalctl --no-hostname -u cnode-blocknotify -f"' >> $HOME/.bashrc
+```
+
+Environment variable reloading
+```
+source $HOME/.bashrc
+```
+
+Startup Confirmation
+```
+blocknotify
+```
+
+The following indications are fine.
+> [xxx] SPO Block Notify has been started.
 
 </details>
 
@@ -81,6 +150,8 @@ nano .env
 [https://cardano-community.github.io/guild-operators/Scripts/cncli/](https://cardano-community.github.io/guild-operators/Scripts/cncli/)
 
 - このプログラムはcncli.shと付随するCNCLI blocklogがセットアップされたサーバーへインストールする必要があります。
+
+- SPO JAPAN GUILDマニュアルを使用している場合は、こちらの[セットアップガイド](https://docs.spojapanguild.net/setup/11-blocknotify-setup/)をご参照ください。
 
 ### 1.依存プログラムをインストールする
 
@@ -104,12 +175,12 @@ pip install discordwebhook python-dotenv slackweb i18nice
 
 ### **スクリプトと設定ファイルをダウンロードする**
 ```
+bn_release="$(curl -s https://api.github.com/repos/btbf/block-notify/releases/latest | jq -r '.tag_name')"
+wget https://github.com/btbf/block-notify/archive/refs/tags/${bn_release}.tar.gz -P $NODE_HOME/scripts
 cd $NODE_HOME/scripts
-git clone https://github.com/btbf/block-notify.git
+tar zxvf ${bn_release}.tar.gz block-notify-${bn_release}/block_notify.py block-notify-${bn_release}/.env block-notify-${bn_release}/i18n/
+mv block-notify-${bn_release} block-notify
 cd block-notify
-git fetch --all --recurse-submodules --tags
-git checkout tags/<latest_tag_name>
-chmod 755 block_check.py
 ```
 
 ### 使い方
@@ -122,18 +193,83 @@ nano .env
 
 | 項目      | 使用用途                          |
 | ----------- | ------------------------------------ |
-| `guild_db_dir`       | blocklog.dbディレクトリのパス  |
-| `guild_db_name`       | ブロックログDBのファイル名  |
-| `ticker`       | プールティッカー名  |
-| `line_notify_token`      | Line Notifyトークン |
-| `dc_notify_url`    | DiscordウェブフックURL |
-| `slack_notify_url`    | SlackウェブフックURL |
-| `teleg_token`    | Telegram APIトークン |
-| `teleg_id`    | Telegram ChatID |
-| `language`    | 使用言語 |
-| `b_timezone`    | お住いのタイムゾーン指定 |
-| `bNotify`    | 通知先指定 |
-| `bNotify_st`    | 通知基準 |
-| `auto_leader`    | スケジュール取得方法 |
+| `guild_db_dir` | guild-dbのパスを入力する |
+| `shelley_genesis` | shelley_genesisのファイルパスを入力する |
+| `byron_genesis` | byron_genesisのファイルパスを入力する |
+| `language` | 通知言語を入力する
+| `ticker`       | プールティッカー名を入力する  |
+| `line_notify_token`      | Line Notifyトークンを入力する |
+| `dc_notify_url`    | DiscordウェブフックURLを入力する |
+| `slack_notify_url`    | SlackウェブフックURLを入力する |
+| `teleg_token`    | Telegram APIトークンを入力する |
+| `teleg_id`    | Telegram ChatIDを入力する |
+| `b_timezone`    | お住いのタイムゾーンを指定する |
+| `bNotify`    | 通知先を指定する |
+| `bNotify_st`    | 通知基準を設定する |
+| `nextepoch_leader_date`    | #次エポックスケジュール日時の通知有無 |
+
+
+### **サービスファイルを設定する**
+=== "ブロックプロデューサーノード"
+    ```bash
+    cat > $NODE_HOME/service/cnode-blocknotify.service << EOF 
+    # file: /etc/systemd/system/cnode-blocknotify.service
+
+    [Unit]
+    Description=Cardano Node - SPO Blocknotify
+    BindsTo=cnode-cncli-sync.service
+    After=cnode-cncli-sync.service
+
+    [Service]
+    Type=simple
+    RemainAfterExit=yes
+    Restart=on-failure
+    RestartSec=20
+    User=$(whoami)
+    WorkingDirectory=${NODE_HOME}/scripts
+    Environment="NODE_HOME=${NODE_HOME}"
+    ExecStart=/bin/bash -c 'cd ${NODE_HOME}/scripts/block-notify/ && python3 -u ./block_notify.py'
+    StandardInput=tty-force
+    SuccessExitStatus=143
+    StandardOutput=syslog
+    StandardError=syslog
+    SyslogIdentifier=cnode-blocknotify
+    TimeoutStopSec=5
+    KillMode=mixed
+
+    [Install]
+    WantedBy=cnode-cncli-sync.service
+    EOF
+    ```
+
+    ```
+    sudo cp $NODE_HOME/service/cnode-blocknotify.service /etc/systemd/system/cnode-blocknotify.service
+    ```
+
+    ```
+    sudo chmod 644 /etc/systemd/system/cnode-blocknotify.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable cnode-blocknotify.service
+    ```
+    SPO BlockNotifyを起動する
+    ```
+    sudo systemctl start cnode-blocknotify.service
+    ```
+
+    環境変数にログ確認用エイリアスを追加する
+    ```
+    echo alias blocknotify='"journalctl --no-hostname -u cnode-blocknotify -f"' >> $HOME/.bashrc
+    ```
+    環境変数再読み込み
+    ```
+    source $HOME/.bashrc
+    ```
+
+    起動確認
+    ```
+    blocknotify
+    ```
+    以下の表示なら正常です。
+    > [xxx] ブロック生成ステータス通知を起動しました  
 
 </details>

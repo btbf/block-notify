@@ -36,3 +36,4 @@ en:
   sentence_guilddb_file: "Guild-DB file not found"
   sentence_shelley_genesis_file: "ShelleyGenesis file not found"
   sentence_byron_genesis_file: "ShelleyGenesis file not found"
+  sentence_next_leader_date: "Please check the blocklog for schedule dates"

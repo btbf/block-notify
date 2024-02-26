@@ -1,4 +1,4 @@
-version = "2.1.1"
+version = "2.1.2"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -20,7 +20,7 @@ from discordwebhook import Discord
 from dotenv import load_dotenv
 
 # .envファイルの内容を読み込みます
-dotenv_path = f"{dirname(__file__)}/.env"
+dotenv_path = f"{dirname(__file__)}/.env2"
 load_dotenv(dotenv_path)
 
 # 環境変数を読み込む
@@ -38,10 +38,10 @@ bNotify_st = os.environ["bNotify_st"]
 slack_notify_url = os.environ["slack_notify_url"]
 teleg_token = os.environ["teleg_token"]
 teleg_id = os.environ["teleg_id"]
+nextepoch_leader_date = os.environ["nextepoch_leader_date"]
+
 guild_db_name = "blocklog.db"
-#s_No = 1
 prev_block = 0
-schedule_get_slot = 304200
 
 sendStream = 'if [ ! -e "send.txt" ]; then send=0; echo $send | tee send.txt; else cat send.txt; fi'
 send = (subprocess.Popen(sendStream, stdout=subprocess.PIPE,
@@ -313,25 +313,30 @@ def getScheduleSlot():
                             if (len(fetch_leader_records) != 0):
                                 line_count = 1
                                 line_leader_str = ""
-                                for x, next_epoch_leader_row in enumerate(fetch_leader_records, 1):
+                                
+                                #スケジュール日付通知
+                                if nextepoch_leader_date == "1":
+                                    for x, next_epoch_leader_row in enumerate(fetch_leader_records, 1):
 
-                                    at_leader_string = next_epoch_leader_row[2]
-                                    leader_btime = parser.parse(at_leader_string).astimezone(timezone(b_timezone)).strftime('%Y-%m-%d %H:%M:%S')
-                                    #LINE対策 20スケジュールごとに分割
-                                    if bNotify == "0" and x >= 21:
-                                        if line_count <= 20:
+                                        at_leader_string = next_epoch_leader_row[2]
+                                        leader_btime = parser.parse(at_leader_string).astimezone(timezone(b_timezone)).strftime('%Y-%m-%d %H:%M:%S')
+                                        #LINE対策 20スケジュールごとに分割
+                                        if bNotify == "0" and x >= 21:
+                                            if line_count <= 20:
 
-                                            line_leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
-                                            line_count += 1
-                                            if line_count == 21 or x == len(fetch_leader_records):
-                                                line_leader_str_list.append(line_leader_str)
-                                                line_leader_str = ""
-                                                line_count = 1
+                                                line_leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
+                                                line_count += 1
+                                                if line_count == 21 or x == len(fetch_leader_records):
+                                                    line_leader_str_list.append(line_leader_str)
+                                                    line_leader_str = ""
+                                                    line_count = 1
 
-                                    else:
-                                        leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
+                                        else:
+                                            leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
 
-                                    p_leader_btime = str(leader_btime)
+                                        #p_leader_btime = str(leader_btime)
+                                else:
+                                    leader_str = i18n.t('message.sentence_nextepoch_leader_date')
 
                                 b_message = '\r\n\r\n' + i18n.t('message.epoch_schedule_details', ticker=ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
                                     + '📈' + i18n.t('message.ideal') + '    :' + str(ideal) + '\r\n'\
@@ -346,16 +351,18 @@ def getScheduleSlot():
 
                             sendMessage(b_message)
 
-                            #LINE対応
-                            line_index = 0
-                            len_line_list = len(line_leader_str_list)
+                            
+                            if nextepoch_leader_date == "1":
+                                #LINE対応
+                                line_index = 0
+                                len_line_list = len(line_leader_str_list)
 
-                            if bNotify == "0":
-                                while line_index < len_line_list:
-                                    b_message = '\r\n' + line_leader_str_list[line_index] + '\r\n'\
+                                if bNotify == "0":
+                                    while line_index < len_line_list:
+                                        b_message = '\r\n' + line_leader_str_list[line_index] + '\r\n'\
 
-                                    sendMessage(b_message)
-                                    line_index += 1
+                                        sendMessage(b_message)
+                                        line_index += 1
 
 
                             send = 1
