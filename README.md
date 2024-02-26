@@ -210,66 +210,66 @@ nano .env
 
 
 ### **サービスファイルを設定する**
-=== "ブロックプロデューサーノード"
-    ```bash
-    cat > $NODE_HOME/service/cnode-blocknotify.service << EOF 
-    # file: /etc/systemd/system/cnode-blocknotify.service
 
-    [Unit]
-    Description=Cardano Node - SPO Blocknotify
-    BindsTo=cnode-cncli-sync.service
-    After=cnode-cncli-sync.service
+```bash
+cat > $NODE_HOME/service/cnode-blocknotify.service << EOF 
+# file: /etc/systemd/system/cnode-blocknotify.service
 
-    [Service]
-    Type=simple
-    RemainAfterExit=yes
-    Restart=on-failure
-    RestartSec=20
-    User=$(whoami)
-    WorkingDirectory=${NODE_HOME}/scripts
-    Environment="NODE_HOME=${NODE_HOME}"
-    ExecStart=/bin/bash -c 'cd ${NODE_HOME}/scripts/block-notify/ && python3 -u ./block_notify.py'
-    StandardInput=tty-force
-    SuccessExitStatus=143
-    StandardOutput=syslog
-    StandardError=syslog
-    SyslogIdentifier=cnode-blocknotify
-    TimeoutStopSec=5
-    KillMode=mixed
+[Unit]
+Description=Cardano Node - SPO Blocknotify
+BindsTo=cnode-cncli-sync.service
+After=cnode-cncli-sync.service
 
-    [Install]
-    WantedBy=cnode-cncli-sync.service
-    EOF
-    ```
+[Service]
+Type=simple
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=20
+User=$(whoami)
+WorkingDirectory=${NODE_HOME}/scripts
+Environment="NODE_HOME=${NODE_HOME}"
+ExecStart=/bin/bash -c 'cd ${NODE_HOME}/scripts/block-notify/ && python3 -u ./block_notify.py'
+StandardInput=tty-force
+SuccessExitStatus=143
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cnode-blocknotify
+TimeoutStopSec=5
+KillMode=mixed
 
-    ```
-    sudo cp $NODE_HOME/service/cnode-blocknotify.service /etc/systemd/system/cnode-blocknotify.service
-    ```
+[Install]
+WantedBy=cnode-cncli-sync.service
+EOF
+```
 
-    ```
-    sudo chmod 644 /etc/systemd/system/cnode-blocknotify.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable cnode-blocknotify.service
-    ```
-    SPO BlockNotifyを起動する
-    ```
-    sudo systemctl start cnode-blocknotify.service
-    ```
+```
+sudo cp $NODE_HOME/service/cnode-blocknotify.service /etc/systemd/system/cnode-blocknotify.service
+```
 
-    環境変数にログ確認用エイリアスを追加する
-    ```
-    echo alias blocknotify='"journalctl --no-hostname -u cnode-blocknotify -f"' >> $HOME/.bashrc
-    ```
-    環境変数再読み込み
-    ```
-    source $HOME/.bashrc
-    ```
+```
+sudo chmod 644 /etc/systemd/system/cnode-blocknotify.service
+sudo systemctl daemon-reload
+sudo systemctl enable cnode-blocknotify.service
+```
+SPO BlockNotifyを起動する
+```
+sudo systemctl start cnode-blocknotify.service
+```
 
-    起動確認
-    ```
-    blocknotify
-    ```
-    以下の表示なら正常です。
-    > [xxx] ブロック生成ステータス通知を起動しました  
+環境変数にログ確認用エイリアスを追加する
+```
+echo alias blocknotify='"journalctl --no-hostname -u cnode-blocknotify -f"' >> $HOME/.bashrc
+```
+環境変数再読み込み
+```
+source $HOME/.bashrc
+```
+
+起動確認
+```
+blocknotify
+```
+以下の表示なら正常です。
+> [xxx] ブロック生成ステータス通知を起動しました  
 
 </details>
