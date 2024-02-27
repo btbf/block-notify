@@ -94,7 +94,7 @@ def connect_db():
 def getAllRows(timing):
     try:
         global prev_block
-        next_leader_records = "0"
+        next_leader_records = "Null"
         connection, cursor = connect_db()
         #print(i18n.t('message.sentence_connected_sql'))
 
