@@ -94,6 +94,7 @@ def connect_db():
 def getAllRows(timing):
     try:
         global prev_block
+        next_leader_records = "0"
         connection, cursor = connect_db()
         #print(i18n.t('message.sentence_connected_sql'))
 
@@ -135,7 +136,6 @@ def getAllRows(timing):
             else:
                 p_next_btime = i18n.t('message.sentence_getschedule_slot')
                 print(i18n.t('message.next_schedule_at')+":", p_next_btime)
-                next_leader_records = "0"
 
             if row[4] != "0":
                 blockUrl=f"https://pooltool.io/realtime/{row[4]}\r\n"
