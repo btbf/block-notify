@@ -1,4 +1,4 @@
-version = "2.1.2"
+version = "2.1.3"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -94,6 +94,7 @@ def connect_db():
 def getAllRows(timing):
     try:
         global prev_block
+        next_leader_records = "Null"
         connection, cursor = connect_db()
         #print(i18n.t('message.sentence_connected_sql'))
 
