@@ -1,4 +1,4 @@
-version = "2.1.2"
+version = "2.1.3"
 
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -135,6 +135,7 @@ def getAllRows(timing):
             else:
                 p_next_btime = i18n.t('message.sentence_getschedule_slot')
                 print(i18n.t('message.next_schedule_at')+":", p_next_btime)
+                next_leader_records = "0"
 
             if row[4] != "0":
                 blockUrl=f"https://pooltool.io/realtime/{row[4]}\r\n"
