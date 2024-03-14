@@ -22,7 +22,7 @@ from os.path import dirname
 
 
 #Configファイル読み込み
-config_path = pathlib.Path(__file__).parent.absolute() / "config2.ini"
+config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
@@ -84,8 +84,6 @@ match notify_level:
         notStatus = ('adopted','leader','confirmed')
     case "OnlyMissed":
         notStatus = ('adopted','leader','confirmed','ghosted','stolen')
-    case _:
-        print(i18n.t('message.st_setting_alert_flag'))
         
 
 def connect_db():
@@ -429,7 +427,7 @@ if __name__ == "__main__":
         try:
             pytz.timezone(notify_timezone)
         except pytz.UnknownTimeZoneError:
-            print(notify_timezone + i18n.t('message.st_notfound_timezone'))
+            print(notify_timezone + ":" + i18n.t('message.st_notfound_timezone'))
             sys.exit()
 
         if notify_platform not in ('Line','Discord','Slack','Telegram'):
@@ -442,10 +440,12 @@ if __name__ == "__main__":
             print(i18n.t('message.st_byron_genesis_file'))
         elif not pool_ticker:
             print(i18n.t('message.st_notfound_ticker'))
-        elif notify_language not in ("en","ja"):
-            print(i18n.t('message.st_notfound_language'))
-        elif nextepoch_leader_date not in ("SummaryOnly","SummaryDate"):
+        elif notify_language not in ('en','ja'):
+            print("Set your notification language.")
+        elif nextepoch_leader_date not in ('SummaryOnly','SummaryDate'):
             print(i18n.t('message.st_notfound_nextepoch_notifylevel'))
+        elif notify_level not in ('All','ExceptCofirm','OnlyMissed'):
+            print(i18n.t('message.st_setting_alert_flag'))
         else:
             if notify_platform == "Line" and line_notify_token == "":
                 print(i18n.t('message.st_line_token'))
