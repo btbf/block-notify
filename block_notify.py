@@ -202,6 +202,7 @@ def getAllRows(timing):
                     p_next_btime = str(next_btime)
 
             else:
+                next_leader_records = "Null"
                 p_next_btime = i18n.t('message.st_getschedule_slot')
                 print(i18n.t('message.next_schedule_at')+":", p_next_btime)
 
@@ -316,7 +317,7 @@ def getScheduleSlot():
                                 line_leader_str = ""
                                 
                                 #スケジュール日付通知
-                                if nextepoch_leader_date == "1":
+                                if nextepoch_leader_date == "SummaryDate":
                                     for x, next_epoch_leader_row in enumerate(fetch_leader_records, 1):
 
                                         at_leader_string = next_epoch_leader_row[2]
@@ -353,7 +354,7 @@ def getScheduleSlot():
                             sendMessage(b_message)
 
                             
-                            if nextepoch_leader_date == "1":
+                            if nextepoch_leader_date == "SummaryDate":
                                 #LINE対応
                                 line_index = 0
                                 len_line_list = len(line_leader_str_list)
