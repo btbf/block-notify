@@ -189,7 +189,7 @@ def getAllRows(timing):
             #スケジュール番号計算
             scheduleNo, total_schedule = getNo(row[5],row[3])
 
-            sqlite_next_leader = f"SELECT * FROM blocklog WHERE slot >= {row[1]} and status = 'leader' order by slot asc limit 1;"
+            sqlite_next_leader = f"SELECT * FROM blocklog WHERE slot >= {row[1]} order by slot asc limit 1 offset 1;"
             cursor.execute(sqlite_next_leader)
             next_leader_records = cursor.fetchall()
 
