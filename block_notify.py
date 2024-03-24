@@ -287,7 +287,6 @@ def getScheduleSlot():
 
     
     #スケジュールスロットエポック判定
-    next_slot_nonce = 325264
     if slot_num > next_slot_nonce:
         #スケジュール送信有無確認
         if send == 0:
