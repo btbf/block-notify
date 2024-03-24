@@ -26,7 +26,7 @@ config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.2.0"
+version = "2.2.1"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -280,7 +280,7 @@ def getScheduleSlot():
     global send
 
     next_slot_nonce = (slot_num - slot_in_epoch + sh_epoch_length) - (3 * byronk / sh_active_slots_coeff)
-    next_slot_nonce = int(next_slot_nonce + 600)
+    next_slot_nonce = int(next_slot_nonce + 700)
     
     #print(slot_num,slot_in_epoch,sh_epoch_length,byronk,sh_active_slots_coeff)
     #print(next_slot_nonce)
@@ -299,8 +299,9 @@ def getScheduleSlot():
             if leadrlog_seivice:
                 #起動中
                 #DB次スケジュール確認
-                connection, cursor = connect_db()
+                
                 while True:
+                    connection, cursor = connect_db()
                     try:
                         sqlite_epochdata_query = f"SELECT * FROM epochdata WHERE epoch=={nextEpoch};"
                         cursor.execute(sqlite_epochdata_query)
@@ -374,10 +375,12 @@ def getScheduleSlot():
                         else:
                             #次エポックスケジュールがなかった場合
                             print(i18n.t('message.st_nextepoch_leader_refetch'))
+                            cursor.close()
                             time.sleep(60)
                             
                     except sqlite3.Error as error:
                         print(i18n.t('message.st_db_failed_read'), error)
+                        break
                     finally:
                         if connection:
                             connection.close()
@@ -392,7 +395,6 @@ def getScheduleSlot():
                 sendMessage(b_message)
                 send = 1
                 stream = os.popen(f'send={send}; echo $send > send.txt')
-                
     else:
         if send == 1:
             send = 0
