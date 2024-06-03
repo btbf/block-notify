@@ -26,7 +26,7 @@ config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.2.1"
+version = "2.2.2"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -43,6 +43,7 @@ notify_timezone = config['NOTIFY_SETTINGS']['notify_timezone']
 notify_platform = config['NOTIFY_SETTINGS']['notify_platform']
 notify_level = config['NOTIFY_SETTINGS']['notify_level']
 nextepoch_leader_date = config['NOTIFY_SETTINGS']['nextepoch_leader_date']
+prometheus_port = config['NOTIFY_SETTINGS']['prometheus_port']
 
 guild_db_name = "blocklog.db"
 prev_block = 0
@@ -107,32 +108,32 @@ def sendMessage(b_message):
             response.json()
 
 
-def getNo(slotEpoch,epochNo):
+def getNo(slotEpoch,epochNo,cursor):
     ssNo = 0
-    try:
-        connection, cursor = connect_db()
-        #print("Connected to SQLite")
-        getEpoch()
-        sqlite_select_query = f"SELECT * FROM blocklog WHERE epoch=={epochNo} order by slot asc;"
-        cursor.execute(sqlite_select_query)
-        epoch_records = cursor.fetchall()
-        #print(i18n.t('message.total_schedule') + ":", len(epoch_records))
-        for i, row in enumerate(epoch_records, 1):
-            if slotEpoch == row[5]:
-                ssNo = i
-                break
-            #else:
-                #ssNo = 0
+    # try:
+    #     connection, cursor = connect_db()
+    #     #print("Connected to SQLite")
+    getEpoch()
+    sqlite_select_query = f"SELECT * FROM blocklog WHERE epoch=={epochNo} order by slot asc;"
+    cursor.execute(sqlite_select_query)
+    epoch_records = cursor.fetchall()
+    #print(i18n.t('message.total_schedule') + ":", len(epoch_records))
+    for i, row in enumerate(epoch_records, 1):
+        if slotEpoch == row[5]:
+            ssNo = i
+            break
+        #else:
+            #ssNo = 0
 
-        cursor.close()
+    #     cursor.close()
 
-    except sqlite3.Error as error:
-        print(i18n.t('message.st_db_failed_read'), error)
-    finally:
-        if connection:
-            connection.close()
-            #print(i18n.t('message.st_closed_sql') + "\n")
-            return ssNo, len(epoch_records)
+    # except sqlite3.Error as error:
+    #     print(i18n.t('message.st_db_failed_read'), error)
+    # finally:
+    #     if connection:
+    #         connection.close()
+    #         #print(i18n.t('message.st_closed_sql') + "\n")
+    return ssNo, len(epoch_records)
 
 def d_line_notify(line_message):
 
@@ -154,7 +155,7 @@ def getEpoch():
     return bepochNo
 
 def getEpochMetrics():
-    cmd = 'curl -s localhost:12798/metrics | grep epoch'
+    cmd = f'curl -s localhost:{prometheus_port}/metrics | grep epoch'
     process = (subprocess.Popen(cmd, stdout=subprocess.PIPE,
                             shell=True).communicate()[0]).decode('utf-8')
     return process
@@ -187,7 +188,7 @@ def getAllRows(timing):
             #print("prevblock", prev_block)
             #print("\n")
             #スケジュール番号計算
-            scheduleNo, total_schedule = getNo(row[5],row[3])
+            scheduleNo, total_schedule = getNo(row[5],row[3],cursor)
 
             sqlite_next_leader = f"SELECT * FROM blocklog WHERE slot >= {row[1]} order by slot asc limit 1 offset 1;"
             cursor.execute(sqlite_next_leader)
@@ -238,8 +239,6 @@ def getAllRows(timing):
             if row[8] not in ['adopted','leader']:
                 prev_block = row[4]
 
-        cursor.close()
-
     except sqlite3.Error as error:
         print("Failed to read data from table", error)
     else:
@@ -258,6 +257,7 @@ def getAllRows(timing):
             print(i18n.t('message.st_started_run', ticker=pool_ticker) + "\n")
     finally:
         if connection:
+            cursor.close()
             connection.close()
 
 
@@ -265,13 +265,13 @@ def getScheduleSlot():
     line_leader_str_list = []
     leader_str = ""
     
-    slotComm = "curl -s localhost:12798/metrics | grep slotNum_int | grep -o [0-9]*"
+    slotComm = f'curl -s localhost:{prometheus_port}/metrics | grep slotNum_int | grep -o [0-9]*'
     slotn = (subprocess.Popen(slotComm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     
     slot_num = int(slotn.rstrip())
     
-    slotIn_Comm = "curl -s localhost:12798/metrics | grep slotIn | grep -o [0-9]*"
+    slotIn_Comm = f'curl -s localhost:{prometheus_port}/metrics | grep slotIn | grep -o [0-9]*'
     slot_in = (subprocess.Popen(slotIn_Comm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     
@@ -299,9 +299,8 @@ def getScheduleSlot():
             if leadrlog_seivice:
                 #起動中
                 #DB次スケジュール確認
-                
+                connection, cursor = connect_db()
                 while True:
-                    connection, cursor = connect_db()
                     try:
                         sqlite_epochdata_query = f"SELECT * FROM epochdata WHERE epoch=={nextEpoch};"
                         cursor.execute(sqlite_epochdata_query)
@@ -370,20 +369,19 @@ def getScheduleSlot():
 
                             send = 1
                             stream = os.popen(f'send={send}; echo $send > send.txt')
-                            cursor.close()
                             break
                         else:
                             #次エポックスケジュールがなかった場合
                             print(i18n.t('message.st_nextepoch_leader_refetch'))
-                            cursor.close()
                             time.sleep(60)
                             
                     except sqlite3.Error as error:
                         print(i18n.t('message.st_db_failed_read'), error)
                         break
-                    finally:
-                        if connection:
-                            connection.close()
+
+                if connection:
+                    cursor.close()
+                    connection.close()
                 
             else:
                 #起動していない
