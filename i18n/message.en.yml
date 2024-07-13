@@ -5,6 +5,7 @@ en:
   getschedule_slot: "Schedule Calculation Slot"
   block_minted_result: "Block Mintig Result(%{current_epoch})"
   block_no: "Block No"
+  block_size: "Block Size"
   slot_no: "Slot No"
   next_schedule_at: "Next Schedule"
   total_schedule: "Total schedule"

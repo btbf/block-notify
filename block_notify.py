@@ -22,11 +22,11 @@ from os.path import dirname
 
 
 #Configファイル読み込み
-config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
+config_path = pathlib.Path(__file__).parent.absolute() / "config2.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.2.2"
+version = "2.3.0"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -154,11 +154,27 @@ def getEpoch():
         #print(i18n.t('message.epoch') + ":", bepochNo)
     return bepochNo
 
+
 def getEpochMetrics():
     cmd = f'curl -s localhost:{prometheus_port}/metrics | grep epoch'
     process = (subprocess.Popen(cmd, stdout=subprocess.PIPE,
                             shell=True).communicate()[0]).decode('utf-8')
     return process
+
+
+def blockSizeCalculation(size):
+    size = int(size)
+    if size > 4:
+        b_size = size / 1024
+    else:
+        b_size = 0
+    return b_size
+
+# def getParamsBlockSize():
+#     cmd = f"cardano-cli query protocol-parameters {node_network} --socket-path {node_socket} | jq .maxBlockBodySize"
+#     process = (subprocess.Popen(cmd, stdout=subprocess.PIPE,
+#                             shell=True).communicate()[0]).decode('utf-8')
+#     return blockSizeCalculation(process)
 
 
 def getAllRows(timing):
@@ -180,6 +196,7 @@ def getAllRows(timing):
         
             at_string = row[2]
             btime = parser.parse(at_string).astimezone(timezone(notify_timezone)).strftime('%Y-%m-%d %H:%M:%S')
+            block_size = round(blockSizeCalculation(row[7]), 2)
             #print("at: ", btime)
             #print("epoch: ", row[3])
             #print("block: ", row[4])
@@ -218,8 +235,9 @@ def getAllRows(timing):
                         + '📍'+str(scheduleNo)+' / '+str(total_schedule)+' > '+ str(row[8])+'\r\n'\
                         + '⏰'+str(btime)+'\r\n'\
                         + '\r\n'\
-                        + '📦' + i18n.t('message.block_no') + ":" + str(row[4]) + '\r\n'\
-                        + '⏱' + i18n.t('message.slot_no') + ":" + str(row[1]) + ' (e:'+str(row[5]) + ')\r\n'\
+                        + '📦' + i18n.t('message.block_no') + ": " + str(row[4]) + '\r\n'\
+                        + '📦' + i18n.t('message.block_size') + ": " + str(block_size) + "KB / " + "88KB" +'\r\n'\
+                        + '⏱' + i18n.t('message.slot_no') + ": " + str(row[1]) + ' (e:'+str(row[5]) + ')\r\n'\
                         + blockUrl\
                         + '\r\n'\
                         + i18n.t('message.next_schedule') + ' >>\r\n'\
@@ -441,7 +459,7 @@ if __name__ == "__main__":
             print(i18n.t('message.st_byron_genesis_file'))
         elif not pool_ticker:
             print(i18n.t('message.st_notfound_ticker'))
-        elif notify_language not in ('en','ja'):
+        elif notify_language not in ('en','ja','fr','es','pt'):
             print("Set your notification language.")
         elif nextepoch_leader_date not in ('SummaryOnly','SummaryDate'):
             print(i18n.t('message.st_notfound_nextepoch_notifylevel'))
