@@ -22,7 +22,7 @@ from os.path import dirname
 
 
 #Configファイル読み込み
-config_path = pathlib.Path(__file__).parent.absolute() / "config2.ini"
+config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
