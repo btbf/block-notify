@@ -22,7 +22,7 @@ from os.path import dirname
 
 
 #Configファイル読み込み
-config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
+config_path = pathlib.Path(__file__).parent.absolute() / "config2.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
@@ -459,7 +459,7 @@ if __name__ == "__main__":
             print(i18n.t('message.st_byron_genesis_file'))
         elif not pool_ticker:
             print(i18n.t('message.st_notfound_ticker'))
-        elif notify_language not in ('en','ja'):
+        elif notify_language not in ('en','ja','fr','es','pt'):
             print("Set your notification language.")
         elif nextepoch_leader_date not in ('SummaryOnly','SummaryDate'):
             print(i18n.t('message.st_notfound_nextepoch_notifylevel'))
