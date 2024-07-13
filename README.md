@@ -69,7 +69,7 @@ nano config.ini
 | item      | Valus      | usage                          |
 | ----------- |---------| ------------------------------------ |
 | `pool_ticker`      | ex.) SJG | pool ticker name  |
-| `notify_language` | english:`en`<br>japanese:`ja`| notification language |
+| `notify_language` | english:`en`<br>japanese:`ja`<br>Portuguese:`pt`<br>French:`fr`<br>Spanish:`es` | notification language |
 | `notify_timezone`   | Asia/Tokyo<br>[Timezone List](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) | Specify your[Timezone](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) |
 | `notify_platform`   | `Line`<br>`Discord`<br>`Slack`<br>`Telegram` | Specify the platform to be notified<br> (Multiple designations are invalid.) |
 | `notify_level`   |All:`All`<br>Other Confirm:`ExceptCofirm`<br>Only Miss:`OnlyMissed`  | Set notification level |
@@ -213,7 +213,7 @@ nano config.ini
 | 項目      | 値      | 使用用途                          |
 | ----------- |---------| ------------------------------------ |
 | `pool_ticker`      | ex.) SJG | プールティッカー名を入力する  |
-| `notify_language` | 英語:`en`<br>日本語:`ja`| 通知言語を入力する |
+| `notify_language` | 英語:`en`<br>日本語:`ja`<br>ポルトガル語:`pt`<br>フランス語:`fr`<br>スペイン語:`es`| 通知言語を入力する |
 | `notify_timezone`   | Asia/Tokyo<br>[タイムゾーン一覧](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) | お住いの[タイムゾーン](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568)を指定する |
 | `notify_platform`   | `Line`<br>`Discord`<br>`Slack`<br>`Telegram` | 通知先プラットフォームを指定する<br> (複数指定は無効) |
 | `notify_level`   |全て:`All`<br>Confirm以外:`ExceptCofirm`<br>Missのみ:`OnlyMissed`  | 通知基準を設定する |

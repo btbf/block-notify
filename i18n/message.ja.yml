@@ -5,6 +5,7 @@ ja:
   getschedule_slot: "スケジュール取得スロット"
   block_minted_result: "ブロック生成結果(%{current_epoch})"
   block_no: "ブロックNo"
+  block_size: "ブロックサイズ"
   slot_no: "スロットNo"
   next_schedule_at: "次のスケジュール日時"
   total_schedule: "総スケジュール"
