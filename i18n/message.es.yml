@@ -15,6 +15,7 @@ es:
   ideal: "Valor Esperado (Ideal)"
   luck: "Probabilidad Asignada (Suerte)"
   allocated_blocks: "Número de Bloques Asignados"
+  remaining_kes_days: "KES días restantes:%{remaining_kes_days}"
   st_criteria_correctly: "Configure correctamente los criterios de notificación"
   st_connected_sql: "Conectado a la base de datos"
   st_closed_sql: "Conexión a la base de datos cerrada"

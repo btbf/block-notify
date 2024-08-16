@@ -22,11 +22,11 @@ from os.path import dirname
 
 
 #Configファイル読み込み
-config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
+config_path = pathlib.Path(__file__).parent.absolute() / "config2.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.3.0"
+version = "2.3.1"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -161,6 +161,16 @@ def getEpochMetrics():
                             shell=True).communicate()[0]).decode('utf-8')
     return process
 
+def getRemainingKesPeriod():
+    remaining_kes_Comm = f'curl -s localhost:12798/metrics | grep remainingKESPeriods_int |  grep -o [0-9]*'
+    remaining_kes = (subprocess.Popen(remaining_kes_Comm, stdout=subprocess.PIPE,
+                                shell=True).communicate()[0]).decode('utf-8')
+    
+    remaining_kes = int(remaining_kes.rstrip())
+    remaining_kes_date = remaining_kes * 129600 / (3600*24)
+    
+    return int(remaining_kes_date)
+
 
 def blockSizeCalculation(size):
     size = int(size)
@@ -261,7 +271,9 @@ def getAllRows(timing):
         print("Failed to read data from table", error)
     else:
         if timing == 'start':
-            start_message = '\r\n' + i18n.t('message.st_started_run', ticker=pool_ticker) + '🟢\r\n'\
+            remaining_kes_days = getRemainingKesPeriod()
+            start_message = '\r\n' + i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + '🟢\r\n'\
+                + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
 
             sendMessage(start_message)
 
@@ -272,7 +284,8 @@ def getAllRows(timing):
 
             print(run_title)
             print(i18n.t('message.next_schedule')+":", f"{next_leader_records}\n")
-            print(i18n.t('message.st_started_run', ticker=pool_ticker) + "\n")
+            print(i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + "\n")
+            print(i18n.t('message.remaining_kes_days', remaining_kes_days=remaining_kes_days) + "\n")
     finally:
         if connection:
             cursor.close()
@@ -314,6 +327,8 @@ def getScheduleSlot():
             leadrlog_service_cmd = "ps aux | grep cnode-cncli-leaderlog.service | awk '{print $NF}'"
             leadrlog_seivice = (subprocess.Popen(leadrlog_service_cmd, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
+            #KES残り日数
+            remaining_kes_days = getRemainingKesPeriod()
             if leadrlog_seivice:
                 #起動中
                 #DB次スケジュール確認
@@ -362,6 +377,7 @@ def getScheduleSlot():
                                     + '📈' + i18n.t('message.ideal') + '    :' + str(ideal) + '\r\n'\
                                     + '💎' + i18n.t('message.luck') + ' :' + str(luck) + '%\r\n'\
                                     + '📋' + i18n.t('message.allocated_blocks') + ' : ' + str(len(fetch_leader_records))+'\r\n'\
+                                    + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
                                     + '\r\n'\
                                     + leader_str + '\r\n'\
 

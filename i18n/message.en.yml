@@ -15,6 +15,7 @@ en:
   ideal: Ideal
   luck: Luck
   allocated_blocks: "Number of allocated blocks"
+  remaining_kes_days: "KES remaining days:%{remaining_kes_days}"
   st_criteria_correctly: "Please set the notification criteria correctly."
   st_connected_sql: "Connected db"
   st_closed_sql: "Closed db"
