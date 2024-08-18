@@ -374,8 +374,8 @@ def getScheduleSlot():
                                     leader_str = i18n.t('message.st_nextepoch_leader_date')
 
                                 b_message = '\r\n\r\n' + i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
-                                    + '📈' + i18n.t('message.ideal') + '    :' + str(ideal) + '\r\n'\
-                                    + '💎' + i18n.t('message.luck') + ' :' + str(luck) + '%\r\n'\
+                                    + '📈' + i18n.t('message.ideal') + '    : ' + str(ideal) + '\r\n'\
+                                    + '💎' + i18n.t('message.luck') + ' : ' + str(luck) + '%\r\n'\
                                     + '📋' + i18n.t('message.allocated_blocks') + ' : ' + str(len(fetch_leader_records))+'\r\n'\
                                     + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
                                     + '\r\n'\

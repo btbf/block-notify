@@ -15,7 +15,7 @@ ja:
   ideal: "期待値(Ideal)"
   luck: "割当て確率(Luck)"
   allocated_blocks: "割当てブロック数"
-  remaining_kes_days: "KES残日数:%{remaining_kes_days}日"
+  remaining_kes_days: "KES残日数 : %{remaining_kes_days}日"
   st_criteria_correctly: "通知基準を正しく設定してください"
   st_connected_sql: "DBに接続しました"
   st_closed_sql: "DB接続を閉じました"
