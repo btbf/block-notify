@@ -15,6 +15,7 @@ pt:
   ideal: "Valor Esperado (Ideal)"
   luck: "Probabilidade Atribuída (Sorte)"
   allocated_blocks: "Número de Blocos Atribuídos"
+  remaining_kes_days: "KES dias restantes : %{remaining_kes_days}"
   st_criteria_correctly: "Configure corretamente os critérios de notificação"
   st_connected_sql: "Conectado ao banco de dados"
   st_closed_sql: "Conexão ao banco de dados fechada"

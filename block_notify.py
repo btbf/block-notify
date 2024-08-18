@@ -26,7 +26,7 @@ config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.3.0"
+version = "2.3.1"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -161,6 +161,16 @@ def getEpochMetrics():
                             shell=True).communicate()[0]).decode('utf-8')
     return process
 
+def getRemainingKesPeriod():
+    remaining_kes_Comm = f'curl -s localhost:12798/metrics | grep remainingKESPeriods_int |  grep -o [0-9]*'
+    remaining_kes = (subprocess.Popen(remaining_kes_Comm, stdout=subprocess.PIPE,
+                                shell=True).communicate()[0]).decode('utf-8')
+    
+    remaining_kes = int(remaining_kes.rstrip())
+    remaining_kes_date = remaining_kes * 129600 / (3600*24)
+    
+    return int(remaining_kes_date)
+
 
 def blockSizeCalculation(size):
     size = int(size)
@@ -261,7 +271,9 @@ def getAllRows(timing):
         print("Failed to read data from table", error)
     else:
         if timing == 'start':
-            start_message = '\r\n' + i18n.t('message.st_started_run', ticker=pool_ticker) + '🟢\r\n'\
+            remaining_kes_days = getRemainingKesPeriod()
+            start_message = '\r\n' + i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + '🟢\r\n'\
+                + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
 
             sendMessage(start_message)
 
@@ -272,7 +284,8 @@ def getAllRows(timing):
 
             print(run_title)
             print(i18n.t('message.next_schedule')+":", f"{next_leader_records}\n")
-            print(i18n.t('message.st_started_run', ticker=pool_ticker) + "\n")
+            print(i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + "\n")
+            print(i18n.t('message.remaining_kes_days', remaining_kes_days=remaining_kes_days) + "\n")
     finally:
         if connection:
             cursor.close()
@@ -314,6 +327,8 @@ def getScheduleSlot():
             leadrlog_service_cmd = "ps aux | grep cnode-cncli-leaderlog.service | awk '{print $NF}'"
             leadrlog_seivice = (subprocess.Popen(leadrlog_service_cmd, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
+            #KES残り日数
+            remaining_kes_days = getRemainingKesPeriod()
             if leadrlog_seivice:
                 #起動中
                 #DB次スケジュール確認
@@ -341,7 +356,7 @@ def getScheduleSlot():
                                         at_leader_string = next_epoch_leader_row[2]
                                         leader_btime = parser.parse(at_leader_string).astimezone(timezone(notify_timezone)).strftime('%Y-%m-%d %H:%M:%S')
                                         #LINE対策 20スケジュールごとに分割
-                                        if notify_platform == "Line" and x >= 21:
+                                        if (notify_platform == "Discord" or notify_platform == "Line") and x >= 21:
                                             if line_count <= 20:
 
                                                 line_leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
@@ -359,9 +374,10 @@ def getScheduleSlot():
                                     leader_str = i18n.t('message.st_nextepoch_leader_date')
 
                                 b_message = '\r\n\r\n' + i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
-                                    + '📈' + i18n.t('message.ideal') + '    :' + str(ideal) + '\r\n'\
-                                    + '💎' + i18n.t('message.luck') + ' :' + str(luck) + '%\r\n'\
+                                    + '📈' + i18n.t('message.ideal') + '    : ' + str(ideal) + '\r\n'\
+                                    + '💎' + i18n.t('message.luck') + ' : ' + str(luck) + '%\r\n'\
                                     + '📋' + i18n.t('message.allocated_blocks') + ' : ' + str(len(fetch_leader_records))+'\r\n'\
+                                    + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
                                     + '\r\n'\
                                     + leader_str + '\r\n'\
 
@@ -370,20 +386,19 @@ def getScheduleSlot():
                                     + i18n.t('message.st_not_schedule') + '\r\n'\
 
                             sendMessage(b_message)
-
+                            print("送信")
                             
                             if nextepoch_leader_date == "SummaryDate":
                                 #LINE対応
                                 line_index = 0
                                 len_line_list = len(line_leader_str_list)
 
-                                if notify_platform == "Line":
+                                if notify_platform == "Discord" or notify_platform == "Line":
                                     while line_index < len_line_list:
                                         b_message = '\r\n' + line_leader_str_list[line_index] + '\r\n'\
 
                                         sendMessage(b_message)
                                         line_index += 1
-
 
                             send = 1
                             stream = os.popen(f'send={send}; echo $send > send.txt')
