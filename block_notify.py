@@ -356,7 +356,7 @@ def getScheduleSlot():
                                         at_leader_string = next_epoch_leader_row[2]
                                         leader_btime = parser.parse(at_leader_string).astimezone(timezone(notify_timezone)).strftime('%Y-%m-%d %H:%M:%S')
                                         #LINE対策 20スケジュールごとに分割
-                                        if notify_platform == "Line" and x >= 21:
+                                        if (notify_platform == "Discord" or notify_platform == "Line") and x >= 21:
                                             if line_count <= 20:
 
                                                 line_leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
@@ -386,20 +386,19 @@ def getScheduleSlot():
                                     + i18n.t('message.st_not_schedule') + '\r\n'\
 
                             sendMessage(b_message)
-
+                            print("送信")
                             
                             if nextepoch_leader_date == "SummaryDate":
                                 #LINE対応
                                 line_index = 0
                                 len_line_list = len(line_leader_str_list)
 
-                                if notify_platform == "Line":
+                                if notify_platform == "Discord" or notify_platform == "Line":
                                     while line_index < len_line_list:
                                         b_message = '\r\n' + line_leader_str_list[line_index] + '\r\n'\
 
                                         sendMessage(b_message)
                                         line_index += 1
-
 
                             send = 1
                             stream = os.popen(f'send={send}; echo $send > send.txt')
