@@ -1,6 +1,15 @@
 # SPO Block Notify
 
-Notify block mint results to any message platform.
+Notify block mint results and Next Block Schedule to any message platform.
+
+Block status Notify
+![](./img/blocks-status.jpg)
+
+Next schedule Notify
+![](/img/blocks-Schedule.jpg)
+
+## Supported languages
+Japanese, English, Portuguese, Spanish, French, Korean, Thai, and Vietnamese
 
 ## Supported platforms
 [LINE](https://notify-bot.line.me/ja/) / [Discord](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) / [Slack](https://api.slack.com/messaging/webhooks) / [Telegram](https://core.telegram.org/bots/api)
