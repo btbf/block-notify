@@ -26,7 +26,7 @@ config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.4.1"
+version = "2.5.0"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
@@ -34,6 +34,7 @@ shelley_genesis = config['PATH']['shelley_genesis']
 byron_genesis = config['PATH']['byron_genesis']
 pool_ticker = config['NOTIFY_SETTINGS']['pool_ticker']
 line_notify_token = config['NOTIFY_API_KEY']['line_notify_token']
+line_user_id = config['NOTIFY_API_KEY']['line_user_id']
 discord_webhook_url = config['NOTIFY_API_KEY']['discord_webhook_url']
 slack_webhook_url = config['NOTIFY_API_KEY']['slack_webhook_url']
 telegram_token = config['NOTIFY_API_KEY']['telegram_token']
@@ -95,7 +96,7 @@ def connect_db():
 def sendMessage(b_message):
     match notify_platform:
         case "Line":
-            d_line_notify(b_message)
+            send_line_push_message(b_message)
         case "Discord":
             discord = Discord(url=discord_webhook_url)
             discord.post(content=b_message)
@@ -135,14 +136,81 @@ def getNo(slotEpoch,epochNo,cursor):
     #         #print(i18n.t('message.st_closed_sql') + "\n")
     return ssNo, len(epoch_records)
 
-def d_line_notify(line_message):
+##################################
+#LINE Messaging API 関数群
+##################################
 
-    line_notify_api = 'https://notify-api.line.me/api/notify'
+MAX_COUNT = 200        # 上限回数
 
-    payload = {'message': line_message}
-    headers = {'Authorization': 'Bearer ' + line_notify_token}  # 発行したトークン
-    line_notify = requests.post(line_notify_api, data=payload, headers=headers)
+# 共通のペイロードを生成する関数
+def create_payload(line_message):
+    return {
+        "to": line_user_id,
+        "messages": [
+            {
+                "type": "text",
+                "text": line_message
+            }
+        ]
+    }
 
+# 送信回数（消費量）を取得する関数
+def get_consumption_count():
+    url = "https://api.line.me/v2/bot/message/quota/consumption"
+    headers = {
+        "Authorization": f"Bearer {line_notify_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print("送信回数取得エラー:", response.text)
+        return None
+    # レスポンス例: {"totalUsage": 123, "targetLimit": 10000, "dateLimit": 10000}
+    data = response.json()
+    return data.get("totalUsage", 0)
+
+# LINEのバリデーションエンドポイントを使って、送信するメッセージの内容をチェックする関数
+def validate_push_message(line_message):
+    url = "https://api.line.me/v2/bot/message/validate/push"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {line_notify_token}"
+    }
+    payload = create_payload(line_message)
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code != 200:
+        print("テキスト内容のバリデーションエラー:", response.text)
+        return False
+    return True
+
+# LINE Messaging API を使ってプッシュメッセージを送信する関数
+def send_line_push_message(line_message):
+    # 送信回数のチェック（quota/consumption エンドポイントを利用）
+    current_count = get_consumption_count()
+    print(f"今月のメッセージ送信数:{current_count}/{MAX_COUNT}")
+    if current_count is None:
+        print("送信回数の取得に失敗しました。")
+        return
+
+    if current_count >= MAX_COUNT:
+        print(f"送信回数が上限（{MAX_COUNT}回）に達しています。（現在：{current_count}回）")
+        return
+
+    # テキスト内容のチェック（LINE側のバリデーションエンドポイントを利用）
+    if not validate_push_message(line_message):
+        return
+
+    # バリデーションに成功した場合、実際のプッシュメッセージ送信用エンドポイントへ送信
+    url = "https://api.line.me/v2/bot/message/push"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {line_notify_token}"
+    }
+    payload = create_payload(line_message)
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code != 200:
+        print("メッセージ送信エラー:", response.text)
+
+##################################
 def getEpoch():
     bepochNo = 0
     get_metrics = getEpochMetrics()
@@ -239,8 +307,9 @@ def getAllRows(timing):
 
             if timing == 'modified':
                 if prev_block != row[4] and row[8] not in notStatus:
-                    #LINE通知内容
-                    b_message = '\r\n' + pool_ticker + ' ' + i18n.t('message.block_minted_result', current_epoch=str(row[3])) +'\r\n'\
+                    #通知内容
+                    remaining_kes_days = getRemainingKesPeriod()
+                    b_message = pool_ticker + ' ' + i18n.t('message.block_minted_result', current_epoch=str(row[3])) +'\r\n'\
                         + '\r\n'\
                         + '📍'+str(scheduleNo)+' / '+str(total_schedule)+' > '+ str(row[8])+'\r\n'\
                         + '⏰'+str(btime)+'\r\n'\
@@ -248,6 +317,7 @@ def getAllRows(timing):
                         + '📦' + i18n.t('message.block_no') + ": " + str(row[4]) + '\r\n'\
                         + '📦' + i18n.t('message.block_size') + ": " + str(block_size) + "KB / " + "88KB" +'\r\n'\
                         + '⏱' + i18n.t('message.slot_no') + ": " + str(row[1]) + ' (e:'+str(row[5]) + ')\r\n'\
+                        + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
                         + blockUrl\
                         + '\r\n'\
                         + i18n.t('message.next_schedule') + ' >>\r\n'\
@@ -272,7 +342,7 @@ def getAllRows(timing):
     else:
         if timing == 'start':
             remaining_kes_days = getRemainingKesPeriod()
-            start_message = '\r\n' + i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + '🟢\r\n'\
+            start_message = i18n.t('message.st_started_run', ticker=pool_ticker, version=version) + '🟢\r\n'\
                 + '🔑' + i18n.t('message.remaining_kes_days', remaining_kes_days=str(remaining_kes_days)) + '\r\n'\
 
             sendMessage(start_message)
@@ -355,8 +425,8 @@ def getScheduleSlot():
 
                                         at_leader_string = next_epoch_leader_row[2]
                                         leader_btime = parser.parse(at_leader_string).astimezone(timezone(notify_timezone)).strftime('%Y-%m-%d %H:%M:%S')
-                                        #LINE対策 20スケジュールごとに分割
-                                        if (notify_platform == "Discord" or notify_platform == "Line") and x >= 21:
+                                        #Discord2000文字制限対策 20スケジュールごとに分割
+                                        if (notify_platform == "Discord") and x >= 21:
                                             if line_count <= 20:
 
                                                 line_leader_str += f"{x}) {next_epoch_leader_row[5]} / {leader_btime}\n"
@@ -373,7 +443,7 @@ def getScheduleSlot():
                                 else:
                                     leader_str = i18n.t('message.st_nextepoch_leader_date')
 
-                                b_message = '\r\n\r\n' + i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
+                                b_message = i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
                                     + '📈' + i18n.t('message.ideal') + '    : ' + str(ideal) + '\r\n'\
                                     + '💎' + i18n.t('message.luck') + ' : ' + str(luck) + '%\r\n'\
                                     + '📋' + i18n.t('message.allocated_blocks') + ' : ' + str(len(fetch_leader_records))+'\r\n'\
@@ -382,20 +452,20 @@ def getScheduleSlot():
                                     + leader_str + '\r\n'\
 
                             else:  #次エポックスケジュールがなかった場合
-                                b_message = '\r\n' + i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
+                                b_message = i18n.t('message.epoch_schedule_details', ticker=pool_ticker, nextEpoch=str(nextEpoch)) + '\r\n'\
                                     + i18n.t('message.st_not_schedule') + '\r\n'\
 
                             sendMessage(b_message)
                             print("送信")
                             
                             if nextepoch_leader_date == "SummaryDate":
-                                #LINE対応
+                                #Discordメッセージ分割対応
                                 line_index = 0
                                 len_line_list = len(line_leader_str_list)
 
-                                if notify_platform == "Discord" or notify_platform == "Line":
+                                if notify_platform == "Discord":
                                     while line_index < len_line_list:
-                                        b_message = '\r\n' + line_leader_str_list[line_index] + '\r\n'\
+                                        b_message = line_leader_str_list[line_index] + '\r\n'\
 
                                         sendMessage(b_message)
                                         line_index += 1
@@ -419,7 +489,7 @@ def getScheduleSlot():
             else:
                 #起動していない
                 #スケジュール取得可能メッセージ送信
-                b_message = '\r\n' + i18n.t('message.notification', ticker=pool_ticker) + '📣\r\n'\
+                b_message = i18n.t('message.notification', ticker=pool_ticker) + '📣\r\n'\
                     + i18n.t('message.st_passed_the_slot', currentEpoch=str(currentEpoch.strip()), slotn=str(slotn)) + '\r\n'\
                     + i18n.t('message.st_you_canget_theschedule', nextepoch=str(nextEpoch)) + '\r\n'\
 
