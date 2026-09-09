@@ -32,6 +32,7 @@ version = "2.5.0"
 guild_db_dir = config['PATH']['guild_db_dir']
 shelley_genesis = config['PATH']['shelley_genesis']
 byron_genesis = config['PATH']['byron_genesis']
+node_config = config['PATH']['node_config']
 pool_ticker = config['NOTIFY_SETTINGS']['pool_ticker']
 line_notify_token = config['NOTIFY_API_KEY']['line_notify_token']
 line_user_id = config['NOTIFY_API_KEY']['line_user_id']
@@ -45,6 +46,12 @@ notify_platform = config['NOTIFY_SETTINGS']['notify_platform']
 notify_level = config['NOTIFY_SETTINGS']['notify_level']
 nextepoch_leader_date = config['NOTIFY_SETTINGS']['nextepoch_leader_date']
 prometheus_port = config['NOTIFY_SETTINGS']['prometheus_port']
+
+with open(node_config) as fn:
+    nodeconfig = json.load(fn)
+
+trace_node_name = nodeconfig['TraceOptionNodeName']
+prometheus_url = f'http://127.0.0.1:{prometheus_port}/{trace_node_name}'
 
 guild_db_name = "blocklog.db"
 prev_block = 0
@@ -82,7 +89,7 @@ byronk = bygenesis['protocolConsts']['k']
 match notify_level:
     case "All":
         notStatus = ('adopted','leader')
-    case "ExceptCofirm":
+    case "ExceptConfirm":
         notStatus = ('adopted','leader','confirmed')
     case "OnlyMissed":
         notStatus = ('adopted','leader','confirmed','ghosted','stolen')
@@ -224,13 +231,13 @@ def getEpoch():
 
 
 def getEpochMetrics():
-    cmd = f'curl -s localhost:{prometheus_port}/metrics | grep epoch'
+    cmd = f"curl -s {prometheus_url} | grep '^cardano_node_metrics_epoch_int '"
     process = (subprocess.Popen(cmd, stdout=subprocess.PIPE,
                             shell=True).communicate()[0]).decode('utf-8')
     return process
 
 def getRemainingKesPeriod():
-    remaining_kes_Comm = f'curl -s localhost:12798/metrics | grep remainingKESPeriods_int |  grep -o [0-9]*'
+    remaining_kes_Comm = f"curl -s {prometheus_url} | grep '^cardano_node_metrics_remainingKESPeriods_int ' | grep -o '[0-9]*$'"
     remaining_kes = (subprocess.Popen(remaining_kes_Comm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     
@@ -366,13 +373,13 @@ def getScheduleSlot():
     line_leader_str_list = []
     leader_str = ""
     
-    slotComm = f'curl -s localhost:{prometheus_port}/metrics | grep slotNum_int | grep -o [0-9]*'
+    slotComm = f"curl -s {prometheus_url} | grep '^cardano_node_metrics_slotNum_int ' | grep -o '[0-9]*$'"
     slotn = (subprocess.Popen(slotComm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     
     slot_num = int(slotn.rstrip())
     
-    slotIn_Comm = f'curl -s localhost:{prometheus_port}/metrics | grep slotIn | grep -o [0-9]*'
+    slotIn_Comm = f"curl -s {prometheus_url} | grep '^cardano_node_metrics_slotInEpoch_int ' | grep -o '[0-9]*$'"
     slot_in = (subprocess.Popen(slotIn_Comm, stdout=subprocess.PIPE,
                                 shell=True).communicate()[0]).decode('utf-8')
     
@@ -548,7 +555,7 @@ if __name__ == "__main__":
             print("Set your notification language.")
         elif nextepoch_leader_date not in ('SummaryOnly','SummaryDate'):
             print(i18n.t('message.st_notfound_nextepoch_notifylevel'))
-        elif notify_level not in ('All','ExceptCofirm','OnlyMissed'):
+        elif notify_level not in ('All','ExceptConfirm','OnlyMissed'):
             print(i18n.t('message.st_setting_alert_flag'))
         else:
             if notify_platform == "Line" and line_notify_token == "":
