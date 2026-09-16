@@ -310,7 +310,7 @@ def getAllRows(timing):
                 print(i18n.t('message.next_schedule_at')+":", p_next_btime)
 
             if row[4] != "0":
-                blockUrl=f"https://pooltool.io/realtime/{row[4]}\r\n"
+                blockUrl=f"https://cardanoscan.io/blocks/{row[4]}\r\n"
 
             if timing == 'modified':
                 if prev_block != row[4] and row[8] not in notStatus:
