@@ -81,7 +81,7 @@ nano config.ini
 | `notify_language` | english:`en`<br>japanese:`ja`<br>Portuguese:`pt`<br>French:`fr`<br>Spanish:`es` | notification language |
 | `notify_timezone`   | Asia/Tokyo<br>[Timezone List](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) | Specify your[Timezone](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) |
 | `notify_platform`   | `Line`<br>`Discord`<br>`Slack`<br>`Telegram` | Specify the platform to be notified<br> (Multiple designations are invalid.) |
-| `notify_level`   |All:`All`<br>Other Confirm:`ExceptCofirm`<br>Only Miss:`OnlyMissed`  | Set notification level |
+| `notify_level`   |All:`All`<br>Other Confirm:`ExceptConfirm`<br>Only Miss:`OnlyMissed`  | Set notification level |
 | `nextepoch_leader_date`   |Only Summary:`SummaryOnly`<br>Summary and date:`SummaryDate` | Notification of next epoch schedule date/time<br>If you do not want the list of next epoch schedule dates to flow to notifications, please include `SummaryOnly`. |
 | `line_notify_token`     |Line notify token id | Enter Line Notify token |
 | `discord_webhook_url`   |discord_webhook_url | Enter discord_webhook_url |
@@ -92,6 +92,8 @@ nano config.ini
 | `guild_db_dir` |ex.)`%(node_home)s/guild-db/blocklog/`| Enter the path to guild-db<br>Do not change `%(node_home)s` as it is a variable |
 | `shelley_genesis` |ex.)`%(node_home)s/files/shelley-genesis.json`| Enter the file path for shelley_genesis<br>Do not change `%(node_home)s` as it is a variable |
 | `byron_genesis` |ex.)`%(node_home)s/files/byron-genesis.json`| Enter the file path for byron_genesis<br>Do not change `%(node_home)s` as it is a variable |
+| `prometheus_port` | `12808` | Enter the cardano-tracer Prometheus port |
+| `node_config` | ex.)`%(node_home)s/files/config.json` | Enter the cardano-node configuration file path<br>Do not change `%(node_home)s` as it is a variable |
 
 
 ### **Configure the service file**
@@ -225,7 +227,7 @@ nano config.ini
 | `notify_language` | 英語:`en`<br>日本語:`ja`<br>ポルトガル語:`pt`<br>フランス語:`fr`<br>スペイン語:`es`| 通知言語を入力する |
 | `notify_timezone`   | Asia/Tokyo<br>[タイムゾーン一覧](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568) | お住いの[タイムゾーン](https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568)を指定する |
 | `notify_platform`   | `Line`<br>`Discord`<br>`Slack`<br>`Telegram` | 通知先プラットフォームを指定する<br> (複数指定は無効) |
-| `notify_level`   |全て:`All`<br>Confirm以外:`ExceptCofirm`<br>Missのみ:`OnlyMissed`  | 通知基準を設定する |
+| `notify_level`   |全て:`All`<br>Confirm以外:`ExceptConfirm`<br>Missのみ:`OnlyMissed`  | 通知基準を設定する |
 | `nextepoch_leader_date`   |概要のみ:`SummaryOnly`<br>概要と日付:`SummaryDate` | 次エポックスケジュール日時の通知有無<br>次エポックスケジュール日付一覧を通知に流したくない場合は`SummaryOnly`を記載してください |
 | `line_notify_token`     |[LINE設定の(8)](#__tabbed_1_1)で発行したトークンID | Line Notifyトークンを入力する |
 | `discord_webhook_url`   |[Discord設定の(7)](#__tabbed_1_2)で発行したウェブフックURL| DiscordウェブフックURLを入力する |
@@ -236,6 +238,8 @@ nano config.ini
 | `guild_db_dir` |ex.)`%(node_home)s/guild-db/blocklog/`| guild-dbのパスを入力する<br>`%(node_home)s`は変数のため変更しないでください |
 | `shelley_genesis` |ex.)`%(node_home)s/files/shelley-genesis.json`| shelley_genesisのファイルパスを入力する<br>`%(node_home)s`は変数のため変更しないでください |
 | `byron_genesis` |ex.)`%(node_home)s/files/byron-genesis.json`| byron_genesisのファイルパスを入力する<br>`%(node_home)s`は変数のため変更しないでください |
+| `prometheus_port` | `12808` | cardano-tracerのPrometheusポートを入力する |
+| `node_config` | ex.)`%(node_home)s/files/config.json` | cardano-node設定ファイルのパスを入力する<br>`%(node_home)s`は変数のため変更しないでください |
 
 
 ### **サービスファイルを設定する**
