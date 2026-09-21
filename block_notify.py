@@ -54,7 +54,7 @@ trace_node_name = nodeconfig['TraceOptionNodeName']
 prometheus_url = f'http://127.0.0.1:{prometheus_port}/{trace_node_name}'
 
 guild_db_name = "blocklog.db"
-prev_block = 0
+prev_slot = None
 checkepoch = ''
 
 sendStream = 'if [ ! -e "send.txt" ]; then send=0; echo $send | tee send.txt; else cat send.txt; fi'
@@ -84,6 +84,14 @@ with open(byron_genesis) as fb:
 sh_active_slots_coeff = shgenesis['activeSlotsCoeff']
 sh_epoch_length = shgenesis['epochLength']
 byronk = bygenesis['protocolConsts']['k']
+
+network_magic = shgenesis.get("networkMagic")
+explorer_hosts = {
+    764824073: "https://cardanoscan.io",
+    1: "https://preprod.cardanoscan.io",
+    2: "https://preview.cardanoscan.io",
+}
+explorer_base = explorer_hosts.get(network_magic, "https://cardanoscan.io")
 
 #通知基準
 match notify_level:
@@ -264,7 +272,7 @@ def blockSizeCalculation(size):
 
 def getAllRows(timing):
     try:
-        global prev_block
+        global prev_slot
         next_leader_records = "Null"
         connection, cursor = connect_db()
         #print(i18n.t('message.st_connected_sql'))
@@ -287,7 +295,7 @@ def getAllRows(timing):
             #print("block: ", row[4])
             #print("slot_in_epoch: ", row[5])
             #print("status: ", row[8])
-            #print("prevblock", prev_block)
+            #print("prev_slot", prev_slot)
             #print("\n")
             #スケジュール番号計算
             scheduleNo, total_schedule = getNo(row[5],row[3],cursor)
@@ -309,11 +317,12 @@ def getAllRows(timing):
                 p_next_btime = i18n.t('message.st_getschedule_slot')
                 print(i18n.t('message.next_schedule_at')+":", p_next_btime)
 
-            if row[4] != "0":
-                blockUrl=f"https://cardanoscan.io/blocks/{row[4]}\r\n"
+            blockUrl = ""
+            if row[4] not in (0, "0"):
+                blockUrl = f"{explorer_base}/block/{row[4]}\r\n"
 
             if timing == 'modified':
-                if prev_block != row[4] and row[8] not in notStatus:
+                if prev_slot != row[1] and row[8] not in notStatus:
                     #通知内容
                     remaining_kes_days = getRemainingKesPeriod()
                     b_message = pool_ticker + ' ' + i18n.t('message.block_minted_result', current_epoch=str(row[3])) +'\r\n'\
@@ -337,12 +346,12 @@ def getAllRows(timing):
                 else:
                     break
             else:
-                prev_block = row[4]
-                #print("prevblock", prev_block)
+                prev_slot = row[1]
+                #print("prev_slot", prev_slot)
 
         if len(records) > 0:
             if row[8] not in ['adopted','leader']:
-                prev_block = row[4]
+                prev_slot = row[1]
 
     except sqlite3.Error as error:
         print("Failed to read data from table", error)
