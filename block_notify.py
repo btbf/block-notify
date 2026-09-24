@@ -26,7 +26,7 @@ config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
 config = configparser.ConfigParser()
 config.read(config_path)
 
-version = "2.5.0"
+version = "2.6.0"
 
 #設定値代入
 guild_db_dir = config['PATH']['guild_db_dir']
